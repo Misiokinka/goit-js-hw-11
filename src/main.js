@@ -40,7 +40,17 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     fetch(`${apiUrl}?${new URLSearchParams(requestData)}`)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          gallery.innerHTML = '';
+          return iziToast.error({
+            title: 'Error',
+            message: 'Something went wrong. Please try again later.',
+            position: 'topRight',
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.hits.length === 0) {
           iziToast.error({
@@ -49,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
               'Sorry, there are no images matching your search query. Please try again!',
             position: 'topRight',
           });
+          gallery.innerHTML = '';
           return;
         }
         renderImages(data.hits);
@@ -77,13 +88,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
   function renderImages(images) {
-    gallery.innerHTML = '';
-
-    images.forEach(image => {
-      const card = document.createElement('div');
-      card.className = 'gallery-item';
-
-      card.innerHTML = `
+    const newListImage = images.map(
+      image =>
+        `
+        <div class="gallery-item">
       <a href="${image.largeImageURL}" data-lightbox="gallery" data-title="Likes: ${image.likes}, Views: ${image.views}, Comments: ${image.comments}, Downloads: ${image.downloads}">
           <img src="${image.webformatURL}" alt="${image.tags}" data-src="${image.largeImageURL}" data-caption="Likes: ${image.likes}, Views: ${image.views}, Comments: ${image.comments}, Downloads: ${image.downloads}">
         </a>
@@ -93,22 +101,23 @@ document.addEventListener('DOMContentLoaded', function () {
         <p class="block-value">${image.likes}</p>
       </div>
       <div class="block-item">
-        <p class="block-item">Views:</p>
-        <p class="block-item">${image.views}</p>
+        <p class="block-label">Views:</p>
+        <p class="block-value">${image.views}</p>
       </div>
       <div class="block-item">
-        <p class="block-item">Comments:</p>
-        <p class="block-item">${image.comments}</p>
+        <p class="block-label">Comments:</p>
+        <p class="block-value">${image.comments}</p>
       </div>
       <div class="block-item">
-        <p class="block-item">Downloads:</p>
-        <p class="block-item">${image.downloads}</p>
+        <p class="block-label">Downloads:</p>
+        <p class="block-value">${image.downloads}</p>
       </div>
     </div>
-      `;
+    </div>
+      `
+    );
 
-      gallery.appendChild(card);
-    });
+    gallery.innerHTML = newListImage.join('');
 
     const lightbox = new SimpleLightbox('.gallery a', {
       captionsData: 'alt',
